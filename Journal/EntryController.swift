@@ -11,26 +11,15 @@ import Foundation
 class EntryController {
     
     static let shared = EntryController()
-    
-    init() {
-        loadFromPersistentStorage()
-    }
+    private init() {}
     
     func addEntryWith(title: String, text: String) {
-        
-        let entry = Entry(title: title, text: text)
-        
-        entries.append(entry)
-        
+        Entry(title: title, text: text)
         saveToPersistentStorage()
     }
     
     func remove(entry: Entry) {
-		
-        if let entryIndex = entries.index(of: entry) {
-            entries.remove(at: entryIndex)
-        }
-        
+        entry.managedObjectContext?.delete(entry)
         saveToPersistentStorage()
     }
     
@@ -42,39 +31,7 @@ class EntryController {
     }
 	
 	// MARK: - Persistence
-    
-    private func fileURL() -> URL {
-        
-        let urls = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-        let fileName = "journal.json"
-        let documentsDirectoryURL = urls[0].appendingPathComponent(fileName)
-        return documentsDirectoryURL
-    }
-    
-    private func loadFromPersistentStorage() {
-        
-		let decoder = JSONDecoder()
-        do {
-            let data = try Data(contentsOf: fileURL())
-            let entries = try decoder.decode([Entry].self, from: data)
-            self.entries = entries
-        } catch let error {
-            print("There was an error saving to persistent storage: \(error)")
-        }
-    }
-    
     private func saveToPersistentStorage() {
-        
-        let encoder = JSONEncoder()
-        do {
-            let data = try encoder.encode(entries)
-            try data.write(to: fileURL())
-        } catch let error {
-            print("There was an error saving to persistent storage: \(error)")
-        }
+        try! CoreDataStack.context.save()
     }
-	
-	// MARK: Properties
-	
-	private(set) var entries = [Entry]()
 }
